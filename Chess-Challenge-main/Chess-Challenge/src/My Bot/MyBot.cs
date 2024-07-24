@@ -6,9 +6,30 @@ public class MyBot : IChessBot
     //values obtained from peSTO's evaluation function, which perform much better than the simplied version :/
     //Null, pawn, horse, bishop, tower, queen and king
     //mg = mid game, eg = eg
-    //no token restrictin is really nice ;w;
-    int[] mg = {0, 82, 337, 365, 477, 1025};
-    int[] eg = {0, 94, 281, 297, 512, 936, 0};
+    int[] mg_piece = {0, 82, 337, 365, 477, 1025, 20000};
+    int[] eg_piece = {0, 94, 281, 297, 512, 936, 20000};
+    //correcting board index for white and black
+    static int[] cor_white = {
+        56, 57, 58, 59, 60, 61, 62, 63, 64,
+        48, 49, 50, 51, 52, 53, 54, 55, 56,
+        40, 41, 42, 43, 44, 45, 46, 47, 48,
+        32, 33, 34, 35, 36, 37, 38, 39, 40,
+        24, 25, 26, 27, 28, 29, 30, 31, 32,
+        16, 17, 18, 19, 20, 21, 22, 23, 24,
+        8, 9, 10, 11, 12, 13, 14, 15, 16,
+        0, 1, 2, 3, 4, 5, 6, 7, 8
+    };
+
+    static int[] cor_black = {
+        8, 7, 6, 5, 4, 3, 2, 1, 0,
+        16, 15, 14, 13, 12, 11, 10, 9, 8,
+        24, 23, 22, 21, 20, 19, 18, 17, 16,
+        32, 31, 30, 29, 28, 27, 26, 25, 24,
+        40, 39, 38, 37, 36, 35, 34, 33, 32,
+        48, 47, 46, 45, 44, 43, 42, 41, 40,
+        56, 55, 54, 53, 52, 51, 50, 49, 48,
+        64, 63, 62, 61, 60, 59, 58, 57, 56
+    };
     static int[] mg_pawn = {
         0,   0,   0,   0,   0,   0,  0,   0,
         98, 134,  61,  95,  68, 126, 34, -11,
@@ -150,13 +171,54 @@ public class MyBot : IChessBot
         eg_pawn, eg_horse, eg_bishop, eg_tower, eg_queen, eg_king
     };
 
-
+    int[] phase_table = {0,1,1,2,4,0};
     //eval will calculate total piece value and their position square value for the given board position
+    int Eval(Board board){
+        int mg_w = 0, eg_w = 0, mg_b = 0, eg_b = 0;
+        int phase = 0;
+        foreach (PieceList list in board.GetAllPieceLists()){
+            foreach(Piece piece in list){
+                phase += phase_table[(int)piece.PieceType];
+                if(piece.IsWhite){
+                    mg_w += mg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
+                    eg_w += eg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
+                }
+                else{
+                    mg_b += mg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
+                    eg_b += eg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
+                }
+            }
+        }
+        if(phase > 24) phase = 24;
+        int eg_phrase = 24-phase;
+        return ((mg_w - mg_b)*phase + (eg_w - eg_b)*eg_phrase)/24;
+    }
+
+    //AlphaBeta pruning using MinMax format, not doing negamax because my eval function isn't very compatible with it
+    int Beta(Board board, int beta, int alpha, int dep){
+        if(dep == 0) return Eval(board);
+        Move[] legal_move = board.GetLegalMoves();
+        return beta;
+    }
+
+    int Alpha(Board board, int beta, int alpha, int dep){
+        Move[] legal_move = board.GetLegalMoves();
+
+        return alpha;
+    }
 
     public Move Think(Board board, Timer timer)
     {
         Move[] legal_move = board.GetLegalMoves();
-		MinMax(board)
-        return moves[0];
+        Move best_move = legal_move[0];
+        int alpha = int.MinValue;
+        int beta = int.MaxValue;
+        if(board.IsWhiteToMove){
+            best_move = Alpha(board, int.MaxValue, int.MinValue, 5);
+        }
+        else{
+            best_move = Beta(board, int.MaxValue, int.MinValue, 5);
+        }
+        return best_move;
     }
 }
