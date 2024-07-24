@@ -1,4 +1,4 @@
-﻿using ChessChallenge.API;
+using ChessChallenge.API;
 using Microsoft.VisualBasic;
 
 public class MyBot : IChessBot
@@ -195,15 +195,18 @@ public class MyBot : IChessBot
     }
 
     //AlphaBeta pruning using MinMax format, not doing negamax because my eval function isn't very compatible with it
-    int Beta(Board board, int beta, int alpha, int dep){
+    int Beta(Board board, int beta, int alpha, int dep, MOVE move){
+		board.MakeMove(move);
         if(dep == 0) return Eval(board);
         Move[] legal_move = board.GetLegalMoves();
         return beta;
     }
 
-    int Alpha(Board board, int beta, int alpha, int dep){
+    int Alpha(Board board, int beta, int alpha, int dep, MOVE move){
+		board.MakeMove(move);
+		if(dep == 0) return EVAL(board);
         Move[] legal_move = board.GetLegalMoves();
-
+		
         return alpha;
     }
 
