@@ -155,7 +155,8 @@ public class MyBot : IChessBot
 
     public Move Think(Board board, Timer timer)
     {
-        Move[] moves = board.GetLegalMoves();
+        Move[] legal_move = board.GetLegalMoves();
+		MinMax(board)
         return moves[0];
     }
 }
