@@ -9,7 +9,16 @@ public class MyBot : IChessBot
     int[] mg_piece = {0, 82, 337, 365, 477, 1025, 20000};
     int[] eg_piece = {0, 94, 281, 297, 512, 936, 20000};
     //correcting board index for white and black to make my life easier later 
+    //correcting board index for white and black to make my life easier later 
     static int[] cor_white = {
+        56, 57, 58, 59, 60, 61, 62, 63,
+        48, 49, 50, 51, 52, 53, 54, 55, 
+        40, 41, 42, 43, 44, 45, 46, 47, 
+        32, 33, 34, 35, 36, 37, 38, 39,
+        24, 25, 26, 27, 28, 29, 30, 31,
+        16, 17, 18, 19, 20, 21, 22, 23,
+        8, 9, 10, 11, 12, 13, 14, 15,
+        0, 1, 2, 3, 4, 5, 6, 7
         56, 57, 58, 59, 60, 61, 62, 63,
         48, 49, 50, 51, 52, 53, 54, 55, 
         40, 41, 42, 43, 44, 45, 46, 47, 
@@ -21,6 +30,14 @@ public class MyBot : IChessBot
     };
 
     static int[] cor_black = {
+        7, 6, 5, 4, 3, 2, 1, 0,
+        15, 14, 13, 12, 11, 10, 9, 8,
+        23, 22, 21, 20, 19, 18, 17, 16,
+        31, 30, 29, 28, 27, 26, 25, 24,
+        39, 38, 37, 36, 35, 34, 33, 32,
+        47, 46, 45, 44, 43, 42, 41, 40,
+        55, 54, 53, 52, 51, 50, 49, 48,
+        63, 62, 61, 60, 59, 58, 57, 56
         7, 6, 5, 4, 3, 2, 1, 0,
         15, 14, 13, 12, 11, 10, 9, 8,
         23, 22, 21, 20, 19, 18, 17, 16,
@@ -177,6 +194,7 @@ public class MyBot : IChessBot
         int mg_w = 0, eg_w = 0, mg_b = 0, eg_b = 0;
         int phase = 0;
 		//iterating over each piece that is in the provided board
+		//iterating over each piece that is in the provided board
         foreach (PieceList list in board.GetAllPieceLists()){
             foreach(Piece piece in list){
                 phase += phase_table[(int)piece.PieceType];
@@ -191,8 +209,10 @@ public class MyBot : IChessBot
             }
         }
 		//distribute the point depend on what stage of the game we are in
+		//distribute the point depend on what stage of the game we are in
         if(phase > 24) phase = 24;
         int eg_phrase = 24-phase;
+		//positve would mean white is winning, when negative would mean black is winning 
 		//positve would mean white is winning, when negative would mean black is winning 
         return ((mg_w - mg_b)*phase + (eg_w - eg_b)*eg_phrase)/24;
     }
