@@ -13,7 +13,6 @@ namespace ChessChallenge.Application
         public static void Draw(int totalTokenCount, int debugTokenCount, int tokenLimit)
         {
             int activeTokenCount = totalTokenCount - debugTokenCount;
-
             int screenWidth = Raylib.GetScreenWidth();
             int screenHeight = Raylib.GetScreenHeight();
             int height = UIHelper.ScaleInt(48);

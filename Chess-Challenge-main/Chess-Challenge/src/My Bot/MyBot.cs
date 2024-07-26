@@ -1,4 +1,7 @@
-﻿using ChessChallenge.API;
+﻿using System;
+using System.ComponentModel;
+using System.Linq;
+using ChessChallenge.API;
 using Microsoft.VisualBasic;
 
 public class MyBot : IChessBot
@@ -6,8 +9,10 @@ public class MyBot : IChessBot
     //values obtained from peSTO's evaluation function, which perform much better than the simplied version :/
     //Null, pawn, horse, bishop, tower, queen and king
     //mg = mid game, eg = eg
-    int[] mg_piece = {0, 82, 337, 365, 477, 1025, 20000};
-    int[] eg_piece = {0, 94, 281, 297, 512, 936, 20000};
+    Timer t_time;
+    int limit = 2000;
+    int[] mg_piece = {0, 82, 337, 365, 477, 1025, 200000};
+    int[] eg_piece = {0, 94, 281, 297, 512, 936, 200000};
     //correcting board index for white and black to make my life easier later 
     //correcting board index for white and black to make my life easier later 
     static int[] cor_white = {
@@ -19,25 +24,9 @@ public class MyBot : IChessBot
         16, 17, 18, 19, 20, 21, 22, 23,
         8, 9, 10, 11, 12, 13, 14, 15,
         0, 1, 2, 3, 4, 5, 6, 7
-        56, 57, 58, 59, 60, 61, 62, 63,
-        48, 49, 50, 51, 52, 53, 54, 55, 
-        40, 41, 42, 43, 44, 45, 46, 47, 
-        32, 33, 34, 35, 36, 37, 38, 39,
-        24, 25, 26, 27, 28, 29, 30, 31,
-        16, 17, 18, 19, 20, 21, 22, 23,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        0, 1, 2, 3, 4, 5, 6, 7
     };
 
     static int[] cor_black = {
-        7, 6, 5, 4, 3, 2, 1, 0,
-        15, 14, 13, 12, 11, 10, 9, 8,
-        23, 22, 21, 20, 19, 18, 17, 16,
-        31, 30, 29, 28, 27, 26, 25, 24,
-        39, 38, 37, 36, 35, 34, 33, 32,
-        47, 46, 45, 44, 43, 42, 41, 40,
-        55, 54, 53, 52, 51, 50, 49, 48,
-        63, 62, 61, 60, 59, 58, 57, 56
         7, 6, 5, 4, 3, 2, 1, 0,
         15, 14, 13, 12, 11, 10, 9, 8,
         23, 22, 21, 20, 19, 18, 17, 16,
@@ -188,16 +177,25 @@ public class MyBot : IChessBot
         eg_pawn, eg_horse, eg_bishop, eg_tower, eg_queen, eg_king
     };
 
-    int[] phase_table = {0,1,1,2,4,0};
+    int[] phase_table = {0,0,1,1,2,4,0};
     //eval will calculate total piece value and their position square value for the given board position
+    int Cur_phase(Board board){
+        int phase = 0;
+        foreach(PieceList list in board.GetAllPieceLists()){
+            foreach(Piece piece in list){
+                phase += phase_table[(int)piece.PieceType];
+            }
+        }
+        if(phase > 24) phase = 24;
+        return phase;
+    }
     int Eval(Board board){
         int mg_w = 0, eg_w = 0, mg_b = 0, eg_b = 0;
-        int phase = 0;
+        int phase = Cur_phase(board);
 		//iterating over each piece that is in the provided board
 		//iterating over each piece that is in the provided board
         foreach (PieceList list in board.GetAllPieceLists()){
             foreach(Piece piece in list){
-                phase += phase_table[(int)piece.PieceType];
                 if(piece.IsWhite){
                     mg_w += mg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
                     eg_w += eg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
@@ -214,34 +212,40 @@ public class MyBot : IChessBot
         int eg_phrase = 24-phase;
 		//positve would mean white is winning, when negative would mean black is winning 
 		//positve would mean white is winning, when negative would mean black is winning 
-        return ((mg_w - mg_b)*phase + (eg_w - eg_b)*eg_phrase)/24;
+        int score = ((mg_w - mg_b)*phase + (eg_w - eg_b)*eg_phrase)/24;
+        if(!board.IsWhiteToMove) score = score*-1;
+        return score;
     }
 
-    //AlphaBeta pruning using MinMax format, not doing negamax because my eval function isn't very compatible with it
-
-	//to get max score possible for black(well technically min because BETA wants to be negative 
-    int Beta(Board board, int beta, int alpha, int dep, Move move){
-		board.MakeMove(move);
-        if(dep == 0) return Eval(board);
-        Move[] legal_move = board.GetLegalMoves();
-        foreach(Move nmove in legal_move){
-			int score = Alpha(board, beta, alpha, dep - 1, nmove);
-			if(score <= alpha) return alpha;
-			if(score < beta) beta = score;
-		}
-		return beta;
+    //uh yea
+    int Quiesce(Board board, int alpha, int beta){
+        if(t_time.MillisecondsElapsedThisTurn > limit) return 0;
+        int score = Eval(board);
+        if(score >= beta) return beta;
+        if(score > alpha) alpha = score;
+        // sort so we capture bigger value first
+        Move[] cap_move = board.GetLegalMoves(true).OrderByDescending(a=> (int)a.CapturePieceType).ToArray<Move>();
+        foreach(Move move in cap_move){
+            board.MakeMove(move);
+            score = -Quiesce(board,-beta, -alpha);
+            board.UndoMove(move);
+            if(score >= beta) return beta;
+            if(score > alpha) alpha = score;
+        }
+        return alpha;
     }
-
-	//to get max score possible for white
-    int Alpha(Board board, int beta, int alpha, int dep, Move move){
-		board.MakeMove(move);
-		if(dep == 0) return Eval(board);
+    int NegMax(Board board, int alpha, int beta, int dep){
+        if(t_time.MillisecondsElapsedThisTurn > limit || board.IsDraw()) return 0;
+        if(board.IsInCheckmate() && board.GetLegalMoves().Length == 0) return int.MinValue + 2;
+        if(dep == 0) return Quiesce(board,alpha, beta);
         Move[] legal_move = board.GetLegalMoves();
-		foreach(Move nmove in legal_move){
-			int score = Beta(board, beta, alpha, dep - 1, nmove);
-			if(score >= beta) return beta;
-			if(score > alpha) alpha = score;
-		}
+        foreach(Move move in legal_move){
+            board.MakeMove(move);
+            int score =  -NegMax(board, -beta, -alpha, dep - 1);
+            board.UndoMove(move);
+            if(score >= beta) return beta;
+            if(score > alpha) alpha = score;
+        }
         return alpha;
     }
 
@@ -249,25 +253,24 @@ public class MyBot : IChessBot
     {
         Move[] legal_move = board.GetLegalMoves();
         Move best_move = legal_move[0];
-        int alpha = int.MinValue;
-        int beta = int.MaxValue;
-        if(board.IsWhiteToMove){
-			foreach(Move move in legal_move){
-				int score = Alpha(board, beta, alpha, 5, move);
-				if(score > alpha){
-					alpha = score;
-					best_move = move;
-				}	
-			}
-        }
-        else{
+        t_time = timer;
+        for(int dep = 1;;dep++){
+            int alpha = int.MinValue+1;
+            int beta = int.MaxValue;
+            Move cur_best_move = best_move;
             foreach(Move move in legal_move){
-				int score = Beta(board, beta, alpha, 5, move);
-				if(score < beta){
-					beta = score;
-					best_move = move;
-				}
-			}
+                board.MakeMove(move);
+                int score = -NegMax(board, -beta, -alpha, dep);
+                board.UndoMove(move);
+                if(score >= beta) break;
+                if(score > alpha){
+                    alpha = score;
+                    cur_best_move = move;
+                }	
+                if(timer.MillisecondsElapsedThisTurn > limit) break;
+            }
+            if(timer.MillisecondsElapsedThisTurn > limit) break;
+            else best_move = cur_best_move;
         }
         return best_move;
     }

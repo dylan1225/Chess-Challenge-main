@@ -53,7 +53,7 @@ namespace ChessChallenge.Application
                 {
                     return baseTimeMs;
                 }
-                return (int)Math.Ceiling(Math.Max(0, baseTimeMs - secondsElapsed * 1000.0 + incrementAddedMs));
+                return (int)Math.Ceiling(Math.Max(0, baseTimeMs - secondsElapsed * 100.0 + incrementAddedMs));
             }
         }
 
