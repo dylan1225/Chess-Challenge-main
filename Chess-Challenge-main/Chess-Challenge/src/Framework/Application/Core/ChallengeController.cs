@@ -10,8 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using static ChessChallenge.Application.Settings;
 using static ChessChallenge.Application.ConsoleHelper;
-using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace ChessChallenge.Application
 {
@@ -91,6 +89,7 @@ namespace ChessChallenge.Application
         public void setup_fen(string fen){
             board.LoadPosition(fen);
         }
+
         public void StartNewGame(PlayerType whiteType, PlayerType blackType)
         {
             // End any ongoing game
@@ -156,22 +155,39 @@ namespace ChessChallenge.Application
             //Console.WriteLine("Exitting thread: " + threadID);
         }
 
-        Move GetBotMove()
+        public Move GetBotMove()
         {
             API.Board botBoard = new(board);
-            try
-            {
-                API.Timer timer = new(PlayerToMove.TimeRemainingMs, PlayerNotOnMove.TimeRemainingMs, GameDurationMilliseconds, IncrementMilliseconds);
-                API.Move move = PlayerToMove.Bot.Think(botBoard, timer);
-                return new Move(move.RawValue);
+            API.Timer timer = new(int.MaxValue, int.MaxValue, 1, 0);
+            API.Move move = PlayerToMove.Bot.Think(botBoard, timer);
+            Move nmove = new Move(move.RawValue);
+            OnMoveChosen(new Move(move.RawValue));
+            string movestr = BoardHelper.SquareNameFromIndex(nmove.StartSquareIndex);
+            movestr += BoardHelper.SquareNameFromIndex(nmove.TargetSquareIndex);
+            if(nmove.IsPromotion){
+                int type = nmove.PromotionPieceType;
+                //2 = 
+                if(type == PieceHelper.Knight) movestr += "N";
+                if(type == PieceHelper.Bishop) movestr += "B";
+                if(type == PieceHelper.Rook) movestr += "R";
+                if(type == PieceHelper.Queen) movestr += "Q";
             }
-            catch (Exception e)
-            {
-                Log("An error occurred while bot was thinking.\n" + e.ToString(), true, ConsoleColor.Red);
-                hasBotTaskException = true;
-                botExInfo = ExceptionDispatchInfo.Capture(e);
-            }
+            Console.WriteLine($"bestmove {movestr}");
+
             return Move.NullMove;
+            // try
+            // {
+            //     API.Timer timer = new(PlayerToMove.TimeRemainingMs, PlayerNotOnMove.TimeRemainingMs, GameDurationMilliseconds, IncrementMilliseconds);
+            //     API.Move move = PlayerToMove.Bot.Think(botBoard, timer);
+            //     return new Move(move.RawValue);
+            // }
+            // catch (Exception e)
+            // {
+            //     Log("An error occurred while bot was thinking.\n" + e.ToString(), true, ConsoleColor.Red);
+            //     hasBotTaskException = true;
+            //     botExInfo = ExceptionDispatchInfo.Capture(e);
+            // }
+            // return Move.NullMove;
         }
 
 
@@ -242,17 +258,18 @@ namespace ChessChallenge.Application
         {
             if (IsLegal(chosenMove))
             {
-                PlayerToMove.AddIncrement(IncrementMilliseconds);
-                if (PlayerToMove.IsBot)
-                {
-                    moveToPlay = chosenMove;
-                    isWaitingToPlayMove = true;
-                    playMoveTime = lastMoveMadeTime + MinMoveDelay;
-                }
-                else
-                {
-                    PlayMove(chosenMove);
-                }
+                // PlayerToMove.AddIncrement(IncrementMilliseconds);
+                // if (PlayerToMove.IsBot)
+                // {
+                //     moveToPlay = chosenMove;
+                //     isWaitingToPlayMove = true;
+                //     playMoveTime = lastMoveMadeTime + MinMoveDelay;
+                // }
+                // else
+                // {
+                //     PlayMove(chosenMove);
+                // }
+                PlayMove(chosenMove);
             }
             else
             {
@@ -264,8 +281,9 @@ namespace ChessChallenge.Application
             }
         }
 
-        void PlayMove(Move move)
+        public void PlayMove(Move move)
         {
+            board.MakeMove(move, false);
             // if (isPlaying)
             // {
             //     bool animate = PlayerToMove.IsBot;

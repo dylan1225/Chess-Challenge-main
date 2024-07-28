@@ -1,3 +1,6 @@
-framework from Sebastian Lague, all I did is making the chess engine in the mybot.cs file
+framework from Sebastian Lague
 
-can't get the thing to be UCI compatible, so now I am just going to start from scratch and create the engine in Python using the chess library 
+my engine is in Mybot.cs located at chess-challenge/src/mybot/mybot.cs
+
+all I used was the API, the framework it self was not uci compatible and run in a GUI, so I have to make it UCI compatible, the API is similar to python chess library
+changes I made to make it UCI compatible can be find in src/framework/application/challengecontroller.cs and program.cs, I commented out previous code because I want to come back and use the GUI.
