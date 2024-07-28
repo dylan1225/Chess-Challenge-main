@@ -38,6 +38,7 @@ namespace ChessChallenge.Application
                         setup_position(tiny);
                         break;
                     case "ucinewgame":
+                        ghost.setup_basic();
                         break;
                     case "quit":
                         ghost.EndGame();

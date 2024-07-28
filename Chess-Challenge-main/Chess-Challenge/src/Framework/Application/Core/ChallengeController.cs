@@ -161,7 +161,7 @@ namespace ChessChallenge.Application
             API.Timer timer = new(int.MaxValue, int.MaxValue, 1, 0);
             API.Move move = PlayerToMove.Bot.Think(botBoard, timer);
             Move nmove = new Move(move.RawValue);
-            OnMoveChosen(new Move(move.RawValue));
+            OnMoveChosen(nmove);
             string movestr = BoardHelper.SquareNameFromIndex(nmove.StartSquareIndex);
             movestr += BoardHelper.SquareNameFromIndex(nmove.TargetSquareIndex);
             if(nmove.IsPromotion){
