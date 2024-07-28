@@ -1,58 +1,102 @@
 ﻿using Raylib_cs;
+using System;
 using System.IO;
 using System.Numerics;
+using System.Reflection;
+using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
 namespace ChessChallenge.Application
 {
-    static class Program
+    public static class Program
     {
         const bool hideRaylibLogs = true;
         static Camera2D cam;
-
-        public static void Main()
+        static ChallengeController ghost = new();
+        static async Task Main(string[] args)
         {
-            Vector2 loadedWindowSize = GetSavedWindowSize();
-            int screenWidth = (int)loadedWindowSize.X;
-            int screenHeight = (int)loadedWindowSize.Y;
-
-            if (hideRaylibLogs)
-            {
-                unsafe
-                {
-                    Raylib.SetTraceLogCallback(&LogCustom);
-                }
+            //making this thing uci compatible ./
+            ghost.start_engine();
+            while(ghost.check()){
+                string input = await Task.Run(Console.ReadLine);
+                string[] tiny = input.Trim().Split();
+                switch (tiny[0]){
+                    case "uci":
+                        Console.WriteLine("id name ghost");
+                        Console.WriteLine("id author Dylan ChenZhen");
+                        Console.WriteLine("uciok");
+                        break;
+                    case "isready":
+                        Console.WriteLine("readyok");
+                        break;
+                    case "go":
+                        go(token);
+                        break;
+                    case "position":
+                        setup_position(tiny);
+                        break;
+                    case "ucinewgame":
+                        break;
+                    case "quit":
+                        ghost.EndGame();
+                        break;
+                    default:
+                        Console.WriteLine("UNKNOWN INPUT " + input);
+                        return;
+                    }
             }
+            
+            // Vector2 loadedWindowSize = GetSavedWindowSize();
+            // int screenWidth = (int)loadedWindowSize.X;
+            // int screenHeight = (int)loadedWindowSize.Y;
 
-            Raylib.InitWindow(screenWidth, screenHeight, "Chess Coding Challenge");
-            Raylib.SetTargetFPS(60);
+            // if (hideRaylibLogs)
+            // {
+            //     unsafe
+            //     {
+            //         Raylib.SetTraceLogCallback(&LogCustom);
+            //     }
+            // }
 
-            UpdateCamera(screenWidth, screenHeight);
+            // Raylib.InitWindow(screenWidth, screenHeight, "Chess Coding Challenge");
+            // Raylib.SetTargetFPS(60);
 
-            ChallengeController controller = new();
+            // UpdateCamera(screenWidth, screenHeight);
 
-            while (!Raylib.WindowShouldClose())
-            {
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(new Color(22, 22, 22, 255));
-                Raylib.BeginMode2D(cam);
+            // ChallengeController controller = new();
 
-                controller.Update();
-                controller.Draw();
+            // while (!Raylib.WindowShouldClose())
+            // {
+            //     Raylib.BeginDrawing();
+            //     Raylib.ClearBackground(new Color(22, 22, 22, 255));
+            //     Raylib.BeginMode2D(cam);
 
-                Raylib.EndMode2D();
+            //     controller.Update();
+            //     controller.Draw();
 
-                controller.DrawOverlay();
+            //     Raylib.EndMode2D();
 
-                Raylib.EndDrawing();
-            }
+            //     controller.DrawOverlay();
 
-            Raylib.CloseWindow();
+            //     Raylib.EndDrawing();
+            // }
 
-            controller.Release();
-            UIHelper.Release();
+            // Raylib.CloseWindow();
+
+            // controller.Release();
+            // UIHelper.Release();
         }
 
+        private static void setup_position(string [] tiny){
+            if(tiny[1] == "startpos"){
+                ghost.setup_basic();
+            }
+            if(tiny[1] == "fen"){
+                string fen = string.Join(' ', tiny, 2, tiny.Length - 2);
+                ghost.setup_fen(fen);
+            } 
+
+        }
         public static void SetWindowSize(Vector2 size)
         {
             Raylib.SetWindowSize((int)size.X, (int)size.Y);
