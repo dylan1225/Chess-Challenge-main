@@ -17,7 +17,7 @@ namespace ChessChallenge.Application
         static async Task Main(string[] args)
         {
             //making this thing uci compatible ./
-            // Console.WriteLine("ghost - Dylan Chen");
+            Console.WriteLine("ghost - Dylan Chen");
             ghost.start_engine();
             while(ghost.check()){
                 string input = await Task.Run(Console.ReadLine);
