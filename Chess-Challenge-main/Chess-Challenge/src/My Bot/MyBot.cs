@@ -6,6 +6,14 @@ using Microsoft.VisualBasic;
 
 static public class MyBot
 {
+    /* 
+     * Art by Donovan Bake
+     .-.
+    (o o) boo!
+    | O \
+     \   \
+      `~~~'
+     */
     //values obtained from peSTO's evaluation function, which perform much better than the simplied version :/
     //Null, pawn, horse, bishop, tower, queen and king
     //mg = mid game, eg = eg
