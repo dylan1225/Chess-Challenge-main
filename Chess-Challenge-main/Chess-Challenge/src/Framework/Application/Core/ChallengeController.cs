@@ -159,7 +159,7 @@ namespace ChessChallenge.Application
         {
             API.Board botBoard = new(board);
             API.Timer timer = new(int.MaxValue, int.MaxValue, 1, 0);
-            API.Move move = PlayerToMove.Bot.Think(botBoard, timer);
+            API.Move move = MyBot.Think(botBoard, timer);
             Move nmove = new Move(move.RawValue);
             OnMoveChosen(nmove);
             string movestr = BoardHelper.SquareNameFromIndex(nmove.StartSquareIndex);
@@ -225,13 +225,13 @@ namespace ChessChallenge.Application
                 boardUI.SetPerspective(PlayerWhite.IsHuman);
                 HumanWasWhiteLastGame = PlayerWhite.IsHuman;
             }
-            else if (PlayerWhite.Bot is MyBot && PlayerBlack.Bot is MyBot)
-            {
-                boardUI.SetPerspective(true);
-            }
+            // else if (PlayerWhite.Bot is MyBot && PlayerBlack.Bot is MyBot)
+            // {
+            //     boardUI.SetPerspective(true);
+            // }
             else
             {
-                boardUI.SetPerspective(PlayerWhite.Bot is MyBot);
+                // boardUI.SetPerspective(PlayerWhite.Bot is MyBot);
             }
         }
 
@@ -239,7 +239,7 @@ namespace ChessChallenge.Application
         {
             return type switch
             {
-                PlayerType.MyBot => new ChessPlayer(new MyBot(), type, GameDurationMilliseconds),
+                // PlayerType.MyBot => new ChessPlayer(new MyBot(), type, GameDurationMilliseconds)
                 PlayerType.EvilBot => new ChessPlayer(new EvilBot(), type, GameDurationMilliseconds),
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
             };

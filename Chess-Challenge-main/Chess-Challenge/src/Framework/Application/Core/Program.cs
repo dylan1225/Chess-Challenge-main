@@ -13,7 +13,7 @@ namespace ChessChallenge.Application
     {
         const bool hideRaylibLogs = true;
         static Camera2D cam;
-        static ChallengeController ghost = new();
+        static ChallengeController ghost = new ChallengeController();
         static async Task Main(string[] args)
         {
             //making this thing uci compatible ./

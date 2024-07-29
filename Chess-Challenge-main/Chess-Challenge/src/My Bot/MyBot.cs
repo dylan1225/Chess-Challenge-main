@@ -4,15 +4,15 @@ using System.Linq;
 using ChessChallenge.API;
 using Microsoft.VisualBasic;
 
-public class MyBot : IChessBot
+static public class MyBot
 {
     //values obtained from peSTO's evaluation function, which perform much better than the simplied version :/
     //Null, pawn, horse, bishop, tower, queen and king
     //mg = mid game, eg = eg
-    Timer t_time;
-    int limit = 2000;
-    int[] mg_piece = {0, 82, 337, 365, 477, 1025, 200000};
-    int[] eg_piece = {0, 94, 281, 297, 512, 936, 200000};
+    static int limit = 2000;
+    static Timer t_time;
+    static int[] mg_piece = {0, 82, 337, 365, 477, 1025, 200000};
+    static int[] eg_piece = {0, 94, 281, 297, 512, 936, 200000};
     //correcting board index for white and black to make my life easier later 
     //correcting board index for white and black to make my life easier later 
     static int[] cor_white = {
@@ -169,17 +169,17 @@ public class MyBot : IChessBot
     };
 
     //putting the array into table for easier access later using piecetype instead of manual check 
-    int[][] mg_table = {
+    static int[][] mg_table = {
         mg_pawn, mg_horse, mg_bishop, mg_tower, mg_queen, mg_king
     };
 
-    int[][] eg_table = {
+    static int[][] eg_table = {
         eg_pawn, eg_horse, eg_bishop, eg_tower, eg_queen, eg_king
     };
 
-    int[] phase_table = {0,0,1,1,2,4,0};
+    static int[] phase_table = {0,0,1,1,2,4,0};
     //eval will calculate total piece value and their position square value for the given board position
-    int Cur_phase(Board board){
+    static int Cur_phase(Board board){
         int phase = 0;
         foreach(PieceList list in board.GetAllPieceLists()){
             foreach(Piece piece in list){
@@ -189,7 +189,7 @@ public class MyBot : IChessBot
         if(phase > 24) phase = 24;
         return phase;
     }
-    int Eval(Board board){
+    static int Eval(Board board){
         int mg_w = 0, eg_w = 0, mg_b = 0, eg_b = 0;
         int phase = Cur_phase(board);
 		//iterating over each piece that is in the provided board
@@ -218,7 +218,7 @@ public class MyBot : IChessBot
     }
 
     //uh yea
-    int Quiesce(Board board, int alpha, int beta){
+    static int Quiesce(Board board, int alpha, int beta){
         if(t_time.MillisecondsElapsedThisTurn > limit) return 0;
         int score = Eval(board);
         if(score >= beta) return beta;
@@ -234,7 +234,7 @@ public class MyBot : IChessBot
         }
         return alpha;
     }
-    int NegMax(Board board, int alpha, int beta, int dep){
+    static int NegMax(Board board, int alpha, int beta, int dep){
         if(t_time.MillisecondsElapsedThisTurn > limit || board.IsDraw()) return 0;
         if(board.IsInCheckmate() && board.GetLegalMoves().Length == 0) return int.MinValue + 2;
         if(dep == 0) return Quiesce(board,alpha, beta);
@@ -249,7 +249,7 @@ public class MyBot : IChessBot
         return alpha;
     }
 
-    public Move Think(Board board, Timer timer)
+    static public Move Think(Board board, Timer timer)
     {
         Move[] legal_move = board.GetLegalMoves();
         Move best_move = legal_move[0];
