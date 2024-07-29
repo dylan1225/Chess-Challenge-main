@@ -1,6 +1,11 @@
 framework from Sebastian Lague
 
-my engine is in Mybot.cs located at chess-challenge/src/mybot/mybot.cs
+My engine is in Mybot.cs located at chess-challenge-main/chess-challenge/src/mybot/mybot.cs
 
-all I used was the API, the framework it self was not uci compatible and run in a GUI, so I have to make it UCI compatible, the API is similar to python chess library
-changes I made to make it UCI compatible can be find in src/framework/application/challengecontroller.cs and program.cs, I commented out previous code because I want to come back and use the GUI.
+All I used was the API. The framework itself was not UCI compatible and ran in a GUI, so I had to make it UCI compatible; the API is similar to the Python chess library.
+I made it UCI compatible, found in src/framework/application/challengecontroller.cs and program.cs.
+
+You can find an exe file I already compiled in chess-challenge-main
+
+Ignore the main.py. I tried to code this in Python, but I find myself more familiar with c#
+
