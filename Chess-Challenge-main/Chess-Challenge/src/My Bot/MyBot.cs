@@ -9,16 +9,16 @@ static public class MyBot
     //values obtained from peSTO's evaluation function, which perform much better than the simplied version :/
     //Null, pawn, horse, bishop, tower, queen and king
     //mg = mid game, eg = eg
-    static int limit = 2000;
+    static int limit = 4500;
     static Timer t_time;
-    static int[] mg_piece = {0, 82, 337, 365, 477, 1025, 200000};
-    static int[] eg_piece = {0, 94, 281, 297, 512, 936, 200000};
+    static int[] mg_piece = { 0, 82, 337, 365, 477, 1025, 200000 };
+    static int[] eg_piece = { 0, 94, 281, 297, 512, 936, 200000 };
     //correcting board index for white and black to make my life easier later 
     //correcting board index for white and black to make my life easier later 
     static int[] cor_white = {
         56, 57, 58, 59, 60, 61, 62, 63,
-        48, 49, 50, 51, 52, 53, 54, 55, 
-        40, 41, 42, 43, 44, 45, 46, 47, 
+        48, 49, 50, 51, 52, 53, 54, 55,
+        40, 41, 42, 43, 44, 45, 46, 47,
         32, 33, 34, 35, 36, 37, 38, 39,
         24, 25, 26, 27, 28, 29, 30, 31,
         16, 17, 18, 19, 20, 21, 22, 23,
@@ -90,7 +90,7 @@ static public class MyBot
         4,  15,  16,   0,   7,  21,  33,   1,
         -33,  -3, -14, -21, -13, -12, -39, -21
     };
-    
+
     static int[] eg_bishop = {
         -14, -21, -11,  -8, -7,  -9, -17, -24,
         -8,  -4,   7, -12, -3, -13,  -4, -14,
@@ -146,7 +146,7 @@ static public class MyBot
         -33, -28, -22, -43,  -5, -32, -20, -41
     };
 
-    static int[] mg_king= {
+    static int[] mg_king = {
         -65,  23,  16, -15, -56, -34,   2,  13,
         29,  -1, -20,  -7,  -8,  -4, -38, -29,
         -9,  24,   2, -16, -20,   6,  22, -22,
@@ -177,99 +177,157 @@ static public class MyBot
         eg_pawn, eg_horse, eg_bishop, eg_tower, eg_queen, eg_king
     };
 
-    static int[] phase_table = {0,0,1,1,2,4,0};
+    static int[] phase_table = { 0, 0, 1, 1, 2, 4, 0 };
     //eval will calculate total piece value and their position square value for the given board position
-    static int Cur_phase(Board board){
+
+    //struct for transposition table value
+    struct ttv { public ulong Key; public float value; public int dep; public int bound; public Move move; }
+    //transposition table
+    static ttv[] ttable = new ttv[20000000];
+
+    static int Cur_phase(Board board)
+    {
         int phase = 0;
-        foreach(PieceList list in board.GetAllPieceLists()){
-            foreach(Piece piece in list){
+        foreach (PieceList list in board.GetAllPieceLists())
+        {
+            foreach (Piece piece in list)
+            {
                 phase += phase_table[(int)piece.PieceType];
             }
         }
-        if(phase > 24) phase = 24;
+        if (phase > 24) phase = 24;
         return phase;
     }
-    static int Eval(Board board){
-        int mg_w = 0, eg_w = 0, mg_b = 0, eg_b = 0;
+    static float Eval(Board board)
+    {
+        float mg_w = 0, eg_w = 0, mg_b = 0, eg_b = 0;
         int phase = Cur_phase(board);
-		//iterating over each piece that is in the provided board
-		//iterating over each piece that is in the provided board
-        foreach (PieceList list in board.GetAllPieceLists()){
-            foreach(Piece piece in list){
-                if(piece.IsWhite){
-                    mg_w += mg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
-                    eg_w += eg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
+        //iterating over each piece that is in the provided board
+        //iterating over each piece that is in the provided board
+        foreach (PieceList list in board.GetAllPieceLists())
+        {
+            foreach (Piece piece in list)
+            {
+                if (piece.IsWhite)
+                {
+                    mg_w += mg_table[((int)piece.PieceType) - 1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
+                    eg_w += eg_table[((int)piece.PieceType) - 1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
                 }
-                else{
-                    mg_b += mg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
-                    eg_b += eg_table[((int)piece.PieceType)-1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
+                else
+                {
+                    mg_b += mg_table[((int)piece.PieceType) - 1][cor_black[piece.Square.Index]] + mg_piece[(int)piece.PieceType];
+                    eg_b += eg_table[((int)piece.PieceType) - 1][cor_black[piece.Square.Index]] + eg_piece[(int)piece.PieceType];
                 }
             }
         }
-		//distribute the point depend on what stage of the game we are in
-		//distribute the point depend on what stage of the game we are in
-        if(phase > 24) phase = 24;
-        int eg_phrase = 24-phase;
-		//positve would mean white is winning, when negative would mean black is winning 
-		//positve would mean white is winning, when negative would mean black is winning 
-        int score = ((mg_w - mg_b)*phase + (eg_w - eg_b)*eg_phrase)/24;
-        if(!board.IsWhiteToMove) score = score*-1;
+        //distribute the point depend on what stage of the game we are in
+        //distribute the point depend on what stage of the game we are in
+        if (phase > 24) phase = 24;
+        int eg_phrase = 24 - phase;
+        //positve would mean white is winning, when negative would mean black is winning 
+        //positve would mean white is winning, when negative would mean black is winning 
+        float score = ((mg_w - mg_b) * phase + (eg_w - eg_b) * eg_phrase) / 24;
+        if (!board.IsWhiteToMove) score = score * -1;
         return score;
     }
 
     //uh yea
-    static int Quiesce(Board board, int alpha, int beta){
-        if(t_time.MillisecondsElapsedThisTurn > limit) return 0;
-        int score = Eval(board);
-        if(score >= beta) return beta;
-        if(score > alpha) alpha = score;
+    static float Quiesce(Board board, float alpha, float beta)
+    {
+        if (t_time.MillisecondsElapsedThisTurn > limit) return 0;
+        float score = Eval(board);
+        if (score >= beta) return beta;
+        if (score > alpha) alpha = score;
         // sort so we capture bigger value first
-        Move[] cap_move = board.GetLegalMoves(true).OrderByDescending(a=> (int)a.CapturePieceType).ToArray<Move>();
-        foreach(Move move in cap_move){
+        Move[] cap_move = board.GetLegalMoves(true).OrderByDescending(a => (int)a.CapturePieceType).ToArray<Move>();
+        foreach (Move move in cap_move)
+        {
             board.MakeMove(move);
-            score = -Quiesce(board,-beta, -alpha);
+            score = -Quiesce(board, -beta, -alpha);
             board.UndoMove(move);
-            if(score >= beta) return beta;
-            if(score > alpha) alpha = score;
+            if (score >= beta) return beta;
+            if (score > alpha) alpha = score;
         }
         return alpha;
     }
-    static int NegMax(Board board, int alpha, int beta, int dep){
-        if(t_time.MillisecondsElapsedThisTurn > limit || board.IsDraw()) return 0;
-        if(board.IsInCheckmate() && board.GetLegalMoves().Length == 0) return int.MinValue + 2;
-        if(dep == 0) return Quiesce(board,alpha, beta);
-        Move[] legal_move = board.GetLegalMoves();
-        foreach(Move move in legal_move){
-            board.MakeMove(move);
-            int score =  -NegMax(board, -beta, -alpha, dep - 1);
-            board.UndoMove(move);
-            if(score >= beta) return beta;
-            if(score > alpha) alpha = score;
+    static float NegMax(Board board, float alpha, float beta, int dep)
+    {
+        if (t_time.MillisecondsElapsedThisTurn > limit || board.IsDraw()) return 0;
+        if (board.IsInCheckmate() && board.GetLegalMoves().Length == 0) return float.MinValue + 3;
+        if (dep == 0) return Quiesce(board, alpha, beta);
+        //zobriskey
+        ulong zkey = board.ZobristKey % 20000000;
+        ttv value = ttable[zkey];
+        if (value.Key == board.ZobristKey && value.dep >= dep)
+        {
+            if (value.bound == 0 || (value.bound == 1 && value.value <= alpha) || (value.bound == 2 && value.value >= beta))
+            {
+                return value.value;
+            }
         }
+        //simple ordering
+        Move[] legal_move = board.GetLegalMoves().OrderByDescending(a => (int)a.CapturePieceType + (int)a.PromotionPieceType).ToArray<Move>();
+        int bound = 1;
+        foreach (Move move in legal_move)
+        {
+            board.MakeMove(move);
+            float score = -NegMax(board, -beta, -alpha, dep - 1);
+            board.UndoMove(move);
+            if (score >= beta)
+            {
+                push_tvalue(zkey, board.ZobristKey, beta, dep, 2);
+                return beta;
+            }
+            if (score > alpha)
+            {
+                bound = 0;
+                alpha = score;
+            }
+        }
+        push_tvalue(zkey, board.ZobristKey, alpha, dep, bound);
         return alpha;
+    }
+
+    static void push_tvalue(ulong zkey, ulong key, float value, int dep, int bound)
+    {
+        ttable[zkey].Key = key;
+        ttable[zkey].value = value;
+        ttable[zkey].dep = dep;
+        ttable[zkey].bound = bound;
     }
 
     static public Move Think(Board board, Timer timer)
     {
-        Move[] legal_move = board.GetLegalMoves();
+        //simple ordering
+        Move[] legal_move = board.GetLegalMoves().OrderByDescending(a => (int)a.CapturePieceType + (int)a.PromotionPieceType).ToArray<Move>();
         Move best_move = legal_move[0];
         t_time = timer;
-        for(int dep = 1;;dep++){
-            int alpha = int.MinValue+1;
-            int beta = int.MaxValue;
+        for (int dep = 1; ; dep++)
+        {
+            float alpha = float.MinValue + 2;
+            float beta = float.MaxValue;
             Move cur_best_move = best_move;
-            foreach(Move move in legal_move){
+            foreach (Move move in legal_move)
+            {
                 board.MakeMove(move);
-                int score = -NegMax(board, -beta, -alpha, dep);
+                float score = -NegMax(board, -beta, -alpha, dep);
                 board.UndoMove(move);
-                if(score >= beta) break;
-                if(score > alpha){
+                if (score >= beta)
+                {
+                    break;
+                }
+                if (score > alpha)
+                {
                     alpha = score;
                     cur_best_move = move;
-                }	
-                if(timer.MillisecondsElapsedThisTurn > limit) break;
+                }
+                if (timer.MillisecondsElapsedThisTurn > limit) break;
             }
-            if(timer.MillisecondsElapsedThisTurn > limit) break;
+            if (timer.MillisecondsElapsedThisTurn > limit)
+            {
+                Console.WriteLine($"dep: {dep}");
+                break;
+            }
             else best_move = cur_best_move;
         }
         return best_move;
