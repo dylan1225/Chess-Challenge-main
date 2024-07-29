@@ -9,3 +9,5 @@ You can find an exe file I already compiled in chess-challenge-main
 
 Ignore the main.py. I tried to code this in Python, but I find myself more familiar with c#
 
+When loaded into Arena, please check to configure my engine to type UCI instead of winboard, for whatever reason, it automatically set it to winboard when I install it in arena./
+
