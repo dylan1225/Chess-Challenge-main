@@ -7,5 +7,5 @@ I made it UCI compatible, found in src/framework/application/challengecontroller
 
 You can find an exe file I already compiled in chess-challenge-main
 
-
+Ignore the main.py. I tried to code this in Python, but I find myself more familiar with c#
 
